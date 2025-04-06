@@ -1,12 +1,36 @@
 {% extends 'FanSupport/base.html' %}
 {% block title %}My Tickets{% endblock %}
 
+{% block extra_head %}
+  <!-- Include Animate.css for sleek animations -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+  <style>
+    /* Flashy flashcard effect */
+    .flashcard {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      border: none;
+      border-radius: 15px;
+      overflow: hidden;
+    }
+    .flashcard:hover {
+      transform: scale(1.05);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+    }
+    /* Styling for the filter form */
+    .filter-form {
+      background-color: #f8f9fa;
+      border-radius: 10px;
+      padding: 15px;
+    }
+  </style>
+{% endblock %}
+
 {% block content %}
 <div class="container my-4">
-  <h1 class="mb-4">My Tickets</h1>
+  <h1 class="mb-4 text-center animate__animated animate__fadeInDown">My Tickets</h1>
   
-  <!-- Optional: Filter Form -->
-  <form method="get" class="mb-4">
+  <!-- Filter Form -->
+  <form method="get" class="mb-4 filter-form animate__animated animate__fadeInUp">
     <div class="row g-3">
       <div class="col-md-4">
         <label for="category" class="form-label">Category</label>
@@ -27,23 +51,23 @@
         </select>
       </div>
       <div class="col-md-4 d-flex align-items-end">
-        <button type="submit" class="btn btn-primary">Filter</button>
+        <button type="submit" class="btn btn-primary w-100">Filter</button>
       </div>
     </div>
   </form>
   
   <!-- Ticket Cards Grid -->
-  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 animate__animated animate__fadeInUp">
     {% for ticket in tickets %}
     <div class="col">
-      <div class="card h-100 shadow-sm">
+      <div class="card flashcard h-100">
         <div class="card-body">
           <h5 class="card-title">{{ ticket.subject }}</h5>
           <p class="card-text">
             <strong>Category:</strong> {{ ticket.get_category_display }}<br>
             <strong>Priority:</strong> {{ ticket.priority }}<br>
             <strong>Status:</strong> {{ ticket.status }}<br>
-            <strong>Created On:</strong> {{ ticket.created_at|date:"M d, Y" }}
+            <strong>Created:</strong> {{ ticket.created_at|date:"M d, Y" }}
           </p>
         </div>
         <div class="card-footer text-end">
@@ -53,7 +77,7 @@
     </div>
     {% empty %}
     <div class="col">
-      <p class="text-muted">No tickets found.</p>
+      <p class="text-muted text-center">No tickets found.</p>
     </div>
     {% endfor %}
   </div>

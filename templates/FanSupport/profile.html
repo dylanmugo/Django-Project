@@ -1,0 +1,80 @@
+{% extends 'FanSupport/base.html' %}
+{% block title %}Profile{% endblock %}
+
+{% block extra_head %}
+  <!-- Custom styling for Profile page -->
+  <style>
+    .profile-container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .profile-header {
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
+      color: #fff;
+      padding: 30px;
+      border-radius: 10px;
+      text-align: center;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    .profile-header h1 {
+      margin: 0;
+      font-size: 2.5rem;
+    }
+    .profile-info {
+      background: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      padding: 20px;
+      margin-bottom: 30px;
+    }
+    .profile-info h2 {
+      font-size: 1.75rem;
+      border-bottom: 2px solid #e9ecef;
+      padding-bottom: 10px;
+      margin-bottom: 20px;
+    }
+    .profile-info p {
+      font-size: 1.1rem;
+      margin-bottom: 10px;
+    }
+    .btn-custom {
+      background: linear-gradient(90deg, #FFA500, #FFD580);
+      color: #fff;
+      border: none;
+    }
+    .btn-custom:hover {
+      background: linear-gradient(90deg, #e69500, #e6c060);
+      color: #fff;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="container profile-container my-4">
+  <!-- Profile Header -->
+  <div class="profile-header text-center animate__animated animate__fadeInDown">
+    <h1>{{ request.user.username }}'s Profile</h1>
+  </div>
+  
+  <!-- Account Details Section -->
+  <div class="profile-info animate__animated animate__fadeInUp">
+    <h2>Account Details</h2>
+    <p><strong>Username:</strong> {{ request.user.username }}</p>
+    <p><strong>Email:</strong> {{ request.user.email }}</p>
+    <!-- Add more details if you extend the User model -->
+  </div>
+
+  <!-- Ticket Summary Section -->
+  <div class="profile-info animate__animated animate__fadeInUp">
+    <h2>Ticket Summary</h2>
+    <p>You have submitted <strong>{{ request.user.ticket_set.count }}</strong> tickets.</p>
+    <!-- Optionally add analytics like average resolution time if available -->
+  </div>
+
+  <!-- Navigation Button -->
+  <div class="text-center">
+    <a href="{% url 'ticket_list' %}" class="btn btn-custom btn-lg">View My Tickets</a>
+  </div>
+</div>
+{% endblock %}

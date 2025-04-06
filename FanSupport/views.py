@@ -4,6 +4,7 @@ from django.contrib.auth import login
 from django.core.mail import send_mail
 from django.conf import settings
 from django.db.models import Count
+from django.utils import timezone
 import json
 from .models import Club, Ticket
 from .forms import TicketForm, RegistrationForm
@@ -34,16 +35,16 @@ def create_ticket(request):
 @login_required
 def ticket_list(request):
     tickets = Ticket.objects.filter(user=request.user)
-    
+
     # Retrieve filter parameters from GET request
     category_filter = request.GET.get('category')
     priority_filter = request.GET.get('priority')
-    
+
     if category_filter:
         tickets = tickets.filter(category=category_filter)
     if priority_filter:
         tickets = tickets.filter(priority=priority_filter)
-    
+
     context = {
         'tickets': tickets,
         'selected_category': category_filter,
@@ -57,7 +58,8 @@ def ticket_detail(request, ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id, user=request.user)
     return render(request, 'FanSupport/ticket_detail.html', {'ticket': ticket})
 
-# Update Ticket Status: Allows updating a ticket's status and sends an email if the status changes
+# Update Ticket Status: Allows updating a ticket's status and sends an email if the status changes.
+# Also, if the status is set to "Resolved", update the resolved_at field.
 @login_required
 def update_ticket_status(request, ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
@@ -66,6 +68,11 @@ def update_ticket_status(request, ticket_id):
         if new_status and new_status != ticket.status:
             old_status = ticket.status
             ticket.status = new_status
+            # Update resolved_at if the ticket is resolved; otherwise clear it.
+            if new_status.lower() == "resolved":
+                ticket.resolved_at = timezone.now()
+            else:
+                ticket.resolved_at = None
             ticket.save()
             # Send email notification to the ticket owner
             subject = "Your Ticket Status Has Been Updated"
@@ -80,13 +87,33 @@ def update_ticket_status(request, ticket_id):
     else:
         return render(request, 'FanSupport/update_ticket_status.html', {'ticket': ticket})
 
+# Resolve Ticket: Dedicated view to mark a ticket as resolved.
+@login_required
+def resolve_ticket(request, ticket_id):
+    ticket = get_object_or_404(Ticket, id=ticket_id, user=request.user)
+    # Only mark as resolved if it's not already resolved.
+    if ticket.status.lower() != "resolved":
+        old_status = ticket.status
+        ticket.status = "Resolved"
+        ticket.resolved_at = timezone.now()
+        ticket.save()
+        # Send email notification to the ticket owner
+        subject = "Your Ticket Has Been Resolved"
+        message = (
+            f"Hi {ticket.user.username},\n\n"
+            f"Your ticket '{ticket.subject}' has been marked as Resolved.\n\n"
+            "Thank you for using our support system."
+        )
+        from_email = settings.EMAIL_HOST_USER if hasattr(settings, 'EMAIL_HOST_USER') else 'no-reply@example.com'
+        send_mail(subject, message, from_email, [ticket.user.email], fail_silently=False)
+    return redirect('ticket_detail', ticket_id=ticket.id)
+
 # Dashboard Page: Displays a chart of ticket statuses and a list of tickets
 @login_required
 def dashboard(request):
     user_tickets = Ticket.objects.filter(user=request.user)
     # Compute ticket counts by status
     status_counts = user_tickets.values('status').annotate(count=Count('status'))
-    
     status_labels = [entry['status'] for entry in status_counts]
     status_data = [entry['count'] for entry in status_counts]
 
@@ -96,6 +123,20 @@ def dashboard(request):
         'status_data': json.dumps(status_data),
     }
     return render(request, 'FanSupport/dashboard.html', context)
+
+# Resolved Tickets by Club: Displays resolved tickets grouped by club
+@login_required
+def resolved_tickets_by_club(request):
+    # Get all resolved tickets for the logged-in user (resolved_at is not null)
+    resolved_tickets = Ticket.objects.filter(user=request.user, resolved_at__isnull=False)
+    tickets_by_club = {}
+    for ticket in resolved_tickets:
+        key = ticket.club if ticket.club else "Unassigned"
+        tickets_by_club.setdefault(key, []).append(ticket)
+    context = {
+        'tickets_by_club': tickets_by_club,
+    }
+    return render(request, 'FanSupport/resolved_tickets_by_club.html', context)
 
 # Registration Page: Allows new users to register and sends a welcome email
 def register(request):

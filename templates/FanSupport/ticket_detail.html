@@ -1,13 +1,42 @@
 {% extends 'FanSupport/base.html' %}
-{% block title %}Ticket Detail{% endblock %}
+{% block title %}Ticket Details{% endblock %}
 {% block content %}
-<h1>{{ ticket.subject }}</h1>
-<p><strong>Category:</strong> {{ ticket.category }}</p>
-<p><strong>Status:</strong> {{ ticket.status }}</p>
-<p><strong>Description:</strong></p>
-<p>{{ ticket.description }}</p>
-<p><strong>Submitted on:</strong> {{ ticket.created_at }}</p>
-<a href="{% url 'ticket_list' %}" class="btn btn-secondary">Back to Tickets</a>
-<a href="{% url 'update_ticket_status' ticket.id %}" class="btn btn-warning">Update Ticket Status</a>
+<div class="container my-4">
+  <h1>{{ ticket.subject }}</h1>
+  <p><strong>Description:</strong> {{ ticket.description }}</p>
+  <p><strong>Status:</strong> {{ ticket.status }}</p>
+  <p><strong>Category:</strong> {{ ticket.get_category_display }}</p>
+  <p><strong>Priority:</strong> {{ ticket.priority }}</p>
+  <p><strong>Created On:</strong> {{ ticket.created_at|date:"M d, Y" }}</p>
 
+  {% if ticket.club %}
+    <hr>
+    <h2>Club Information</h2>
+    <p><strong>Name:</strong> {{ ticket.club.name }}</p>
+    <p><strong>Stadium:</strong> {{ ticket.club.stadium|default:"N/A" }}</p>
+    <p>
+      <strong>Founded:</strong>
+      {% if ticket.club.founded %}
+        {{ ticket.club.founded|date:"Y" }}
+      {% else %}
+        N/A
+      {% endif %}
+    </p>
+    {% if ticket.club.logo %}
+      <img src="{{ ticket.club.logo.url }}" alt="{{ ticket.club.name }} logo" class="img-fluid">
+    {% endif %}
+  {% else %}
+    <p class="text-muted">No club selected for this ticket.</p>
+  {% endif %}
+{% if ticket.status|lower != "resolved" %}
+  <div class="mt-3">
+    <a href="{% url 'resolve_ticket' ticket.id %}" class="btn btn-success">
+      <i class="fa fa-check"></i> Mark as Resolved
+    </a>
+  </div>
+{% endif %}
+
+
+  <a href="{% url 'ticket_list' %}" class="btn btn-secondary mt-3">Back to Tickets</a>
+</div>
 {% endblock %}
